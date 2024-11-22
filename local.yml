@@ -1,0 +1,43 @@
+services:
+  mongodb_container:
+    container_name: mongodb_container
+    image: mongo
+    # environment:
+    #   MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME}
+    #   MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
+    #   MONGO_INITDB_DATABASE: ${MONGODB_DATABASE}
+    env_file:
+      - .env
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data_container:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - app-network
+    restart: always
+
+  fastapi:
+    build: ./
+    container_name: fastapi-app
+    environment:
+      - MONGO_URI=${MONGO_URI}
+      - FOLDER_SAVE_FILES=${FOLDER_SAVE_FILES}
+      - DEBUG=1
+    ports:
+      - "8000:8000"
+      - "5678:5678"
+    depends_on:
+      - mongodb_container
+    networks:
+      - app-network
+    volumes:
+      - ./:/app
+
+
+volumes:
+  mongodb_data_container:
+
+networks:
+  app-network:
+    driver: bridge
